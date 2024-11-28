@@ -1,0 +1,133 @@
+-- Database: farmacia_db
+
+-- DROP DATABASE IF EXISTS farmacia_db;
+
+CREATE DATABASE farmacia_db
+    WITH
+    OWNER = poo2024
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'English_United States.1252'
+    LC_CTYPE = 'English_United States.1252'
+    LOCALE_PROVIDER = 'libc'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+
+-- DefiniciÃ³n de las tablas
+CREATE TABLE IF NOT EXISTS public.bitacora
+(
+    id_bitacora serial NOT NULL,
+    id_usuario integer,
+    accion character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bitacora_pkey PRIMARY KEY (id_bitacora)
+);
+
+CREATE TABLE IF NOT EXISTS public.detalle_factura
+(
+    id_detalle serial NOT NULL,
+    id_factura integer,
+    id_medicamento integer,
+    cantidad integer NOT NULL,
+    precio_unitario numeric(10, 2) NOT NULL,
+    CONSTRAINT detalle_factura_pkey PRIMARY KEY (id_detalle)
+);
+
+CREATE TABLE IF NOT EXISTS public.facturas
+(
+    id_factura serial NOT NULL,
+    fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    total numeric(10, 2) NOT NULL,
+    id_usuario integer,
+    CONSTRAINT facturas_pkey PRIMARY KEY (id_factura)
+);
+
+CREATE TABLE IF NOT EXISTS public.medicamento_proveedor
+(
+    id_proveedor integer NOT NULL,
+    id_medicamento integer NOT NULL,
+    CONSTRAINT medicamento_proveedor_pkey PRIMARY KEY (id_proveedor, id_medicamento)
+);
+
+CREATE TABLE IF NOT EXISTS public.medicamentos
+(
+    id_medicamento serial NOT NULL,
+    codigo character varying(20) COLLATE pg_catalog."default",
+    nombre character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    codigo_barras character varying(50) COLLATE pg_catalog."default",
+    fecha_creacion date,
+    fecha_vencimiento date,
+    ubicacion character varying(100) COLLATE pg_catalog."default",
+    precio numeric(10, 2) NOT NULL,
+    cantidad_stock integer DEFAULT 0,
+    id_usuario integer,
+    CONSTRAINT medicamentos_pkey PRIMARY KEY (id_medicamento),
+    CONSTRAINT medicamentos_codigo_key UNIQUE (codigo)
+);
+
+CREATE TABLE IF NOT EXISTS public.proveedores
+(
+    id_proveedor serial NOT NULL,
+    nombre character varying(100) COLLATE pg_catalog."default",
+    telefono character varying(20) COLLATE pg_catalog."default",
+    direccion text COLLATE pg_catalog."default",
+    CONSTRAINT proveedores_pkey PRIMARY KEY (id_proveedor)
+);
+
+CREATE TABLE IF NOT EXISTS public.usuarios
+(
+    id_usuario serial NOT NULL,
+    nombre_usuario character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    password character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    rol character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT usuarios_pkey PRIMARY KEY (id_usuario),
+    CONSTRAINT usuarios_nombre_usuario_key UNIQUE (nombre_usuario)
+);
+
+-- DefiniciÃ³n de las claves forÃ¡neas
+ALTER TABLE IF EXISTS public.bitacora
+    ADD CONSTRAINT bitacora_id_usuario_fkey FOREIGN KEY (id_usuario)
+    REFERENCES public.usuarios (id_usuario) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+ALTER TABLE IF EXISTS public.detalle_factura
+    ADD CONSTRAINT detalle_factura_id_factura_fkey FOREIGN KEY (id_factura)
+    REFERENCES public.facturas (id_factura) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+ALTER TABLE IF EXISTS public.detalle_factura
+    ADD CONSTRAINT detalle_factura_id_medicamento_fkey FOREIGN KEY (id_medicamento)
+    REFERENCES public.medicamentos (id_medicamento) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+CREATE INDEX IF NOT EXISTS idx_detalle_factura_medicamento
+    ON public.detalle_factura(id_medicamento);
+
+ALTER TABLE IF EXISTS public.facturas
+    ADD CONSTRAINT facturas_id_usuario_fkey FOREIGN KEY (id_usuario)
+    REFERENCES public.usuarios (id_usuario) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+ALTER TABLE IF EXISTS public.medicamento_proveedor
+    ADD CONSTRAINT medicamento_proveedor_id_medicamento_fkey FOREIGN KEY (id_medicamento)
+    REFERENCES public.medicamentos (id_medicamento) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+ALTER TABLE IF EXISTS public.medicamento_proveedor
+    ADD CONSTRAINT medicamento_proveedor_id_proveedor_fkey FOREIGN KEY (id_proveedor)
+    REFERENCES public.proveedores (id_proveedor) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+ALTER TABLE IF EXISTS public.medicamentos
+    ADD CONSTRAINT medicamentos_id_usuario_fkey FOREIGN KEY (id_usuario)
+    REFERENCES public.usuarios (id_usuario) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
